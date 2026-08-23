@@ -16,6 +16,8 @@ export type WearItSuggestion = {
   suggestion: string
   reason: string
   itemIndices?: number[]  // 0-based indices into the wardrobe array used in the prompt
+  items?: number[]        // alias for itemIndices
+  itemNames?: string[]    // legacy / randomizer compatibility
   isFallback?: boolean
 }
 

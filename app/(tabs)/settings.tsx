@@ -509,7 +509,13 @@ export default function SettingsScreen() {
       <View style={styles.divider} />
 
       {/* ── Support ──────────────────────────────────────── */}
-      <Text style={styles.heading}>Support</Text>
+      <Text style={styles.heading}>Help & Support</Text>
+      <TouchableOpacity
+        style={[styles.saveBtn, { marginBottom: Spacing.sm }]}
+        onPress={() => router.push('/help')}
+      >
+        <Text style={styles.saveBtnText}>✨ Help & User Guide</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.testBtn} onPress={() => router.push('/bug-report')}>
         <Text style={styles.testBtnText}>Report a Bug</Text>
       </TouchableOpacity>

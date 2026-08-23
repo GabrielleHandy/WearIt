@@ -96,8 +96,14 @@ export async function getOutfitSuggestion(items: ClothingItem[], context?: strin
   const errorAnswer: WearItSuggestion= { suggestion: 'Could not generate a suggestion right now.', reason: "" }
 
   const wardrobeList = items
-    .map((item, i) => `${i}. ${item.name} (${item.category})`)
+    .map((item, i) => {
+      let line = `${i}. ${item.name} (${item.category})`
+      if (item.color) line += ` — color: ${item.color}`
+      if (item.worn) line += ` — worn: ${item.worn}x`
+      return line
+    })
     .join('\n')
+  
 
   // Inject up to 5 most recent saved looks so Claude avoids repeating them
   const savedLooksBlock = savedOutfits && savedOutfits.length > 0
@@ -165,14 +171,36 @@ export async function getOutfitSuggestion(items: ClothingItem[], context?: strin
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 512,
-        system: `You are WearIt, a personal fashion AI.
-          You only suggest outfits using items from the user's actual wardrobe.
-          Be specific — name the actual items. Return your answer in this JSON format: { "suggestion": string, "reason": string, "items": [0-based index numbers of the items you selected] }. Keep reason and suggestion 2-3 sentences each.
-          The "items" array must contain 0-based index numbers from the numbered wardrobe list — not item names.
-          Never suggest items not in the wardrobe.`,
+        system: `You are WearIt, an expert personal fashion stylist and wardrobe curator.
+You assemble sophisticated, highly wearable outfits exclusively from pieces in the user's wardrobe list.
+
+STYLING DIRECTIVES:
+1. FORMULA: Assemble a complete look containing:
+   - 1 Top + 1 Bottom (or 1 Dress), plus 1 pair of Footwear (Shoes).
+   - Optional: Layer with Outerwear or add Accessories when appropriate for the weather or occasion.
+2. COLOR & PROPORTION HARMONY:
+   - Balance statement pieces with neutral foundations (e.g. cream, black, navy, stone, grey, olive).
+   - Contrast textures (e.g., silk + knit, linen + denim, leather + wool).
+   - Never combine clashing patterns or conflicting garments of the same category (e.g. 2 pants).
+3. WEATHER & OCCASION ADAPTATION:
+   - If temperature, weather, or occasion is provided, prioritize comfort, appropriate layering, and formality.
+4. ACTIONABLE STYLING IN "suggestion":
+   - Explicitly name each chosen piece.
+   - Describe how to wear and style the look (e.g., tuck style, rolling sleeves, layering order).
+5. STYLING RATIONALE IN "reason":
+   - 2-3 sentences explaining the visual balance, texture/color harmony, and why it suits the occasion.
+6. FORMAT REQUIREMENT:
+   - Return ONLY valid JSON:
+   {
+     "suggestion": string,
+     "reason": string,
+     "items": [0-based index numbers of the items you selected from the numbered list]
+   }
+   - "items" must contain only 0-based integer indices corresponding to the numbered list.
+   - Never suggest items not in the wardrobe list.`,
         messages: [{
           role: 'user',
-          content: `Here is my wardrobe:\n${wardrobeList}${savedLooksBlock}${context ? `\n\nOccasion: ${context}` : ''}\n\nSuggest one complete outfit for today. If there is an Occasion make that the main context when suggesting.`
+          content: `Here is my wardrobe:\n${wardrobeList}${savedLooksBlock}${context ? `\n\nOccasion & Context: ${context}` : ''}\n\nSuggest one styled complete outfit for today based on these pieces.`
         }]
       })
     })
@@ -203,9 +231,10 @@ export async function tagClothingItem(photoUri: string): Promise<{
   name: string
   category: ClothingItem['category']
   color: string
+  tags?: string[]
   crop?: CropHint
 }> {
-  const fallback = { name: 'New Item', category: 'Tops' as ClothingItem['category'], color: '' }
+  const fallback = { name: 'New Item', category: 'Tops' as ClothingItem['category'], color: '', tags: [] }
 
   if (!PROXY_URL && !AI_KEY) return fallback
 
@@ -224,7 +253,7 @@ export async function tagClothingItem(photoUri: string): Promise<{
       headers,
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 200,
+        max_tokens: 250,
         messages: [{
           role: 'user',
           content: [
@@ -234,10 +263,23 @@ export async function tagClothingItem(photoUri: string): Promise<{
             },
             {
               type: 'text',
-              text: `Identify this clothing item. Return ONLY valid JSON, no other text:
-{"name": string, "category": "Tops"|"Bottoms"|"Shoes"|"Dresses"|"Outerwear"|"Accessories"|"Other", "color": string, "crop": {"top": number, "left": number, "bottom": number, "right": number}}
-Name should be specific (e.g. "White Linen Shirt", "Dark Wash Jeans"). Color is the primary color.
-crop is a tight bounding box around only the clothing item (0.0–1.0 fractions of image width/height). Exclude people, background, and empty space. Add 5% padding on each side.`,
+              text: `You are an expert fashion cataloging AI. Identify the clothing item in this image.
+Return ONLY valid JSON (no markdown, no extra text):
+{
+  "name": string,
+  "category": "Tops"|"Bottoms"|"Shoes"|"Dresses"|"Outerwear"|"Accessories"|"Other",
+  "color": string,
+  "tags": [string, string, string],
+  "crop": {"top": number, "left": number, "bottom": number, "right": number}
+}
+
+INSPECTION RULES:
+- "name": Descriptive, editorial title including material/texture + cut + garment type (e.g. "Relaxed Linen Button-Down", "High-Rise Straight Denim", "Chunky Ribbed Knit Sweater", "Leather Penny Loafers"). Avoid vague names like "Shirt" or "Pants".
+- "category": Must be one of: Tops, Bottoms, Shoes, Dresses, Outerwear, Accessories, Other.
+- "color": Primary color name (e.g. "White", "Navy", "Charcoal", "Burgundy", "Beige", "Olive", "Black", "Tan").
+- "tags": 3 to 5 lowercase style/season/utility tags (e.g. ["casual", "linen", "breathable", "summer", "work"]).
+- "crop": Tight normalized bounding box (0.0–1.0 fractions of width/height) around ONLY the clothing item. Exclude body parts, background clutter, and empty margins. Add 3-5% margin around garment edges.
+- If multiple garments or a person appears, identify and crop the single primary central clothing item.`,
             },
           ],
         }],
@@ -268,6 +310,7 @@ crop is a tight bounding box around only the clothing item (0.0–1.0 fractions 
       name: parsed.name || fallback.name,
       category: parsed.category || fallback.category,
       color: parsed.color || '',
+      tags: Array.isArray(parsed.tags) ? parsed.tags.map((t: unknown) => String(t).toLowerCase()) : [],
       crop,
     }
   } catch (e) {
@@ -301,19 +344,24 @@ export async function analyzeGap(
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 512,
-        system: `You are a personal fashion stylist AI. Given a wishlist item and a wardrobe, identify what the user already owns that works with or is similar to the wishlist item, and what they'd still need to complete the look. Be specific and practical. Return ONLY valid JSON — no markdown, no extra text.`,
+        system: `You are a personal wardrobe stylist and shopping consultant. Given a wishlist item and a user's current wardrobe, provide an honest, discerning purchase assessment.
+Determine:
+1. Which existing wardrobe pieces pair with this wishlist item to create complete looks (Pairings).
+2. What complementary pieces they would still need to complete full outfits (Missing).
+3. A clear 2-3 sentence summary on whether this item expands their style versatility or fills a genuine wardrobe gap.
+Return ONLY valid JSON — no markdown, no extra text.`,
         messages: [{
           role: 'user',
-          content: `Wishlist item: ${wishlistItem.name} (${wishlistItem.color} ${wishlistItem.category})
+          content: `Wishlist item: ${wishlistItem.name} (${wishlistItem.color || 'Neutral'} ${wishlistItem.category})
 
-My wardrobe:
+My current wardrobe:
 ${wardrobeList || 'No items yet'}
 
 Return JSON in this exact format:
 {
-  "matchNames": ["exact item names from the wardrobe list that are similar to or would work well with this wishlist item"],
-  "missing": ["short descriptions of pieces they'd need to complete a look — be specific, e.g. 'White sneakers', 'Slim-fit dark jeans'"],
-  "summary": "2-3 sentences: what they already have that works, and what they still need"
+  "matchNames": ["exact item names from the wardrobe list that pair well with this wishlist item to make outfits"],
+  "missing": ["short descriptions of specific pieces they'd need to style with this — e.g. 'Tailored white trousers', 'Leather ankle boots'"],
+  "summary": "2-3 sentences: what in their closet pairs with it, whether it fills a missing gap, and styling advice."
 }
 
 Only include item names in matchNames that appear exactly in the wardrobe list above.`,
@@ -357,7 +405,7 @@ export async function generateTheme(aesthetic: string): Promise<Theme | null> {
   textPrimary    — headings, body text
   textSecondary  — labels, captions, muted text
   textPlaceholder — input placeholder text
-  textOnAccent   — text on accent-colored backgrounds (must be readable)
+  textOnAccent   — text on accent-colored backgrounds (must be highly readable)
   accent         — primary CTA, active tab, selection ring
   accentMuted    — secondary / outline states
   accentDanger   — destructive actions, errors
@@ -376,7 +424,7 @@ export async function generateTheme(aesthetic: string): Promise<Theme | null> {
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 600,
-        system: `You are a designer who creates mobile app color themes. Given an aesthetic description, generate a complete, harmonious color palette. Use hex colors only. Return ONLY a valid JSON object — no markdown, no explanation, no extra text.`,
+        system: `You are an expert digital product designer creating a high-contrast, accessible mobile app theme. Given an aesthetic description, generate a complete, harmonious color palette. Use hex colors only. Return ONLY a valid JSON object — no markdown, no explanation, no extra text.`,
         messages: [{
           role: 'user',
           content: `Create a WearIt app theme for the aesthetic: "${aesthetic}"
@@ -384,14 +432,16 @@ export async function generateTheme(aesthetic: string): Promise<Theme | null> {
 Return a JSON object with exactly these keys:
 ${themeContract}
 
-Design rules:
-- Hex colors only (e.g. "#1a1a2e")
-- background and surface should feel immersive but not overwhelming — dark for moody aesthetics, light for airy ones
-- accent is the personality color — make it feel true to the aesthetic
-- textOnAccent must be readable on the accent background (white or near-black)
-- border: "rgba(r,g,b,0.10)" style is fine for subtle borders
-- tabBar should match or be very close to background
-- sectionLabel should match accent
+Design & Accessibility Rules:
+- Hex colors only (e.g. "#1A1412", "#FAF7F2")
+- background and surface: surface must have visible contrast from background (e.g. 5-10% lighter in dark palettes, subtle contrast/borders in light palettes).
+- accent: the signature aesthetic color (vibrant, rich, or iconic to the aesthetic).
+- CONTRAST GUARD: textOnAccent must have strong contrast against accent:
+  - If accent is light/pastel, textOnAccent MUST be dark ("#1A1412").
+  - If accent is dark/saturated, textOnAccent MUST be light ("#FAF7F2").
+- textPrimary must have at least 4.5:1 contrast against background and surface.
+- tabBar should match or complement background.
+- sectionLabel should match accent.
 - Make it cohesive, beautiful, and unmistakably "${aesthetic}"`
         }]
       })

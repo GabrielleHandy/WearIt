@@ -1,4 +1,3 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
@@ -18,9 +17,11 @@ import {
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { setPendingSharedUri } from '@/utils/shareIntent';
-import { WearItThemeProvider } from '@/contexts/ThemeContext';
 import { AIProvider } from '@/contexts/AIContext';
+import { WearItThemeProvider } from '@/contexts/ThemeContext';
+import { View } from 'react-native';
 import { installBugLogger } from '@/utils/bugLogger';
+import { FloatingHelpButton } from '@/components/FloatingHelpButton';
 
 installBugLogger();
 
@@ -63,16 +64,18 @@ export default function RootLayout() {
   return (
     <AIProvider>
       <WearItThemeProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <View style={{ flex: 1 }}>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
             <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+            <Stack.Screen name="help" options={{ presentation: 'modal', title: 'Help & Guide' }} />
             <Stack.Screen name="bug-report" options={{ title: 'Report a Bug' }} />
             <Stack.Screen name="tag-outfit" options={{ headerShown: false }} />
           </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
+          <FloatingHelpButton />
+        </View>
+        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       </WearItThemeProvider>
     </AIProvider>
   );

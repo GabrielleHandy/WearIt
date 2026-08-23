@@ -12,6 +12,7 @@ import { type Theme, Spacing, Radius, Typography, Colors } from '@/constants/the
 import { useTheme, THEMES, type ThemeKey } from '@/contexts/ThemeContext'
 import { useAI } from '@/contexts/AIContext'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
 
 const PRESETS = [
   { label: 'Ollama (local)', url: 'http://localhost:11434/v1/chat/completions', model: 'llama3.2' },
@@ -26,6 +27,7 @@ const THEME_LABELS: Partial<Record<ThemeKey, string>> = {
 }
 
 export default function ProfileScreen() {
+  const router = useRouter()
   const { theme, themeKey, customThemeName, setThemeKey, applyCustomTheme } = useTheme()
   const { aiEnabled, setAIEnabled } = useAI()
   const { top } = useSafeAreaInsets()
@@ -374,6 +376,17 @@ export default function ProfileScreen() {
           <Text style={styles.clearBtnText}>Remove fallback model</Text>
         </TouchableOpacity>
       )}
+
+      <View style={styles.divider} />
+
+      {/* ── Help & Support ───────────────────────────────── */}
+      <Text style={styles.heading}>Help & Support</Text>
+      <TouchableOpacity
+        style={[styles.saveBtn, { marginBottom: Spacing.sm }]}
+        onPress={() => router.push('/help')}
+      >
+        <Text style={styles.saveBtnText}>✨ Help & User Guide</Text>
+      </TouchableOpacity>
 
     </ScrollView>
   )

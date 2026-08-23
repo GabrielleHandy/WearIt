@@ -630,6 +630,7 @@ export default function WardrobeScreen() {
       category: tag.category,
       emoji: CATEGORY_EMOJI[tag.category] ?? '👗',
       color: tag.color,
+      tags: tag.tags,
       photoUri: finalUri,
       originalPhotoUri: tag.crop ? cleanUri : undefined,  // keep original so crop can be redone
       addedAt: new Date().getTime().toString(),

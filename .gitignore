@@ -40,3 +40,10 @@ app-example
 # generated native folders
 /ios
 /android
+
+# serverless/backup deps
+lambda-backup/package-lock.json
+
+# ide & local docs
+.vscode/
+docs/

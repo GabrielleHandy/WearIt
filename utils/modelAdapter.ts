@@ -26,32 +26,33 @@ export async function askModelAdapter(
   const fewShotBlock = examples.length > 0
     ? `\nExamples of good suggestions:\n` +
       examples.slice(-3).map(e =>
-        `Wardrobe: ${e.wardrobeList}\nContext: ${e.context}\nSuggestion: ${e.suggestion}`
+        `${e.wardrobeList}\nContext: ${e.context}\nSuggestion: ${e.suggestion}\nReason: ${e.reason}`
       ).join('\n\n') + '\n'
     : ''
 
   // Hardened prompt — format constraint comes first, escape hatch gives the
   // model a valid JSON fallback so it never breaks format to hedge or explain.
-  const prompt = `Return ONLY a JSON object. No markdown, no code fences, no explanation, no text before or after the JSON.
+  const prompt = `Return ONLY a valid JSON object. No markdown, no code fences, no text before or after the JSON.
 
 Required format:
 {"suggestion": "...", "reason": "...", "items": [0, 1, 2]}
 
-where "items" is an array of 0-based index numbers from the wardrobe list.
-If you cannot follow this format exactly, return:
+where "items" is an array containing ONLY 0-based integer index numbers of the selected pieces from the numbered wardrobe list.
+If you cannot follow this format, return:
 {"suggestion": "No suggestion available.", "reason": "", "isFallback": true}
 
-You are a fashion assistant. Rules:
-1. Only use items from the wardrobe list below — never suggest anything else
-2. Pick exactly one complete outfit
-3. suggestion and reason are each 2-3 sentences
-4. Do not mention category labels like (Tops) or (Bottoms) in your response
-5. Favor items worn more often — they are likely favorites
+You are WearIt, an expert fashion stylist and wardrobe curator.
+Styling Rules:
+1. FORMULA: Pick 1 Top + 1 Bottom (or 1 Dress), plus 1 pair of Shoes. Optionally layer 1 Outerwear/Accessory.
+2. Only select items from the numbered wardrobe list below — never hallucinate pieces not in the list.
+3. Suggestion (2-3 sentences): Name the specific pieces and describe how to style them (tucking, cuffing, layering).
+4. Reason (2-3 sentences): Explain the color harmony, texture balance, and occasion/weather appropriateness.
+5. Do not mention internal category tags like (Tops) or (Bottoms) in your text.
 ${fewShotBlock}
 Wardrobe:
 ${wardrobeList}
 
-${context ? `Occasion: ${context}` : 'Occasion: casual everyday'}`
+${context ? `Occasion & Context: ${context}` : 'Occasion & Context: casual everyday'}`
 
   try {
     const headers: Record<string, string> = {
