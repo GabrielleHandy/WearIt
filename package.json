@@ -32,7 +32,7 @@
     "expo-location": "~57.0.12",
     "expo-mail-composer": "~57.0.1",
     "expo-router": "~57.0.15",
-    "expo-share-intent": "^6.1.0",
+    "expo-share-intent": "^8.0.1",
     "expo-splash-screen": "~57.0.7",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.2",
