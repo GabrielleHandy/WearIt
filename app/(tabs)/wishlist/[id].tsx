@@ -11,6 +11,7 @@ import { getWishlistItem, loadWardrobe } from '@/utils/storage'
 import { analyzeGap } from '@/utils/claude'
 import { type Theme, Spacing, Radius, Typography, Shadow } from '@/constants/theme'
 import { useTheme } from '@/contexts/ThemeContext'
+import { ShopSimilarModal } from '@/components/ShopSimilarModal'
 
 export default function WishlistDetail() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -22,6 +23,7 @@ export default function WishlistDetail() {
   const [result, setResult] = useState<GapAnalysisResult | null>(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [analyzed, setAnalyzed] = useState(false)
+  const [showShopModal, setShowShopModal] = useState(false)
 
   useFocusEffect(
     useCallback(() => {
@@ -74,23 +76,44 @@ export default function WishlistDetail() {
           {item.sourceNote ? ` · ${item.sourceNote}` : ''}
         </Text>
 
-        {/* Analyze button */}
-        {!analyzed && (
+        {/* Action Buttons */}
+        <View style={styles.actionGroup}>
           <TouchableOpacity
-            style={[styles.analyzeBtn, analyzing && styles.analyzeBtnDisabled]}
-            onPress={handleAnalyze}
-            disabled={analyzing}
+            style={styles.dupesBtn}
+            onPress={() => setShowShopModal(true)}
+            activeOpacity={0.85}
           >
-            {analyzing ? (
-              <View style={styles.row}>
-                <ActivityIndicator color={theme.textOnAccent} size="small" />
-                <Text style={styles.analyzeBtnText}>Checking your wardrobe...</Text>
-              </View>
-            ) : (
-              <Text style={styles.analyzeBtnText}>Check closet gap</Text>
-            )}
+            <Ionicons name="cart-outline" size={18} color={theme.accent} />
+            <Text style={styles.dupesBtnText}>Find Dupes & Stores</Text>
           </TouchableOpacity>
-        )}
+
+          {!analyzed && (
+            <TouchableOpacity
+              style={[styles.analyzeBtn, analyzing && styles.analyzeBtnDisabled]}
+              onPress={handleAnalyze}
+              disabled={analyzing}
+              activeOpacity={0.85}
+            >
+              {analyzing ? (
+                <View style={styles.row}>
+                  <ActivityIndicator color={theme.textOnAccent} size="small" />
+                  <Text style={styles.analyzeBtnText}>Checking wardrobe...</Text>
+                </View>
+              ) : (
+                <Text style={styles.analyzeBtnText}>Check closet gap</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Shop Modal */}
+        <ShopSimilarModal
+          visible={showShopModal}
+          onClose={() => setShowShopModal(false)}
+          itemName={item.name}
+          category={item.category}
+          color={item.color}
+        />
 
         {/* Results */}
         {result && (
@@ -211,13 +234,33 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
     textAlign: 'center',
     marginBottom: Spacing.xl,
   },
+  actionGroup: {
+    width: '100%',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  dupesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.base,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: theme.accent,
+    backgroundColor: theme.surface,
+  },
+  dupesBtnText: {
+    ...Typography.styles.btnLabel,
+    color: theme.accent,
+  },
   analyzeBtn: {
     backgroundColor: theme.accent,
     paddingVertical: Spacing.base,
     paddingHorizontal: Spacing.xxl,
     borderRadius: Radius.lg,
     alignItems: 'center',
-    marginBottom: Spacing.xl,
     width: '100%',
   },
   analyzeBtnDisabled: {

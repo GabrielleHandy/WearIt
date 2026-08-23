@@ -15,6 +15,7 @@ import * as FileSystem from 'expo-file-system'
 import { type Theme, Spacing, Radius, Typography, Shadow } from '@/constants/theme'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ShopSimilarModal } from '@/components/ShopSimilarModal'
 
 const { width } = Dimensions.get('window')
 const CARD_SIZE = (width - Spacing.screen * 2 - Spacing.base) / 2
@@ -27,6 +28,8 @@ export default function InspoScreen() {
   const [items, setItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [tagging, setTagging] = useState(false)
+  const [dupeItem, setDupeItem] = useState<{ name: string; category?: string; color?: string } | null>(null)
+  const [scanningDupe, setScanningDupe] = useState(false)
   const { takePhoto, pickFromLibrary } = useImagePicker()
 
   useFocusEffect(
@@ -79,10 +82,30 @@ export default function InspoScreen() {
     await processUri(uri)
   }
 
+  const scanAndFindDupes = async (getUri: () => Promise<string | null>) => {
+    const uri = await getUri()
+    if (!uri) return
+    setScanningDupe(true)
+    try {
+      const tag = await tagClothingItem(uri)
+      setDupeItem({
+        name: tag.name,
+        category: tag.category,
+        color: tag.color,
+      })
+    } catch {
+      Alert.alert('Scan error', 'Could not identify this item. Try again with a clearer photo.')
+    } finally {
+      setScanningDupe(false)
+    }
+  }
+
   const handleAdd = () => {
-    Alert.alert('Add to Inspo', 'Screenshot something you love or snap it in-store', [
-      { text: '📷 Take Photo', onPress: () => captureAndTag(takePhoto) },
-      { text: '🖼️ Choose from Library', onPress: () => captureAndTag(pickFromLibrary) },
+    Alert.alert('Inspo & Dupe Finder', 'Save looks to your board or scan for instant dupes across stores', [
+      { text: '🔍 Scan & Find Dupes (Camera)', onPress: () => scanAndFindDupes(takePhoto) },
+      { text: '🔍 Scan & Find Dupes (Library)', onPress: () => scanAndFindDupes(pickFromLibrary) },
+      { text: '📸 Save to Inspo Board', onPress: () => captureAndTag(takePhoto) },
+      { text: '🖼️ Choose Photo for Inspo', onPress: () => captureAndTag(pickFromLibrary) },
       { text: 'Cancel', style: 'cancel' },
     ])
   }
@@ -144,6 +167,16 @@ export default function InspoScreen() {
         </View>
       )}
 
+      {/* Visual Scanning Dupes indicator */}
+      {scanningDupe && (
+        <View style={[styles.taggingBanner, { backgroundColor: theme.accent + '15' }]}>
+          <ActivityIndicator color={theme.accent} size="small" />
+          <Text style={[styles.taggingText, { color: theme.accent, fontFamily: 'JosefinSans_600SemiBold' }]}>
+            Scanning for dupes & matching stores...
+          </Text>
+        </View>
+      )}
+
       {/* ── Grid ───────────────────────────────────────── */}
       {items.length === 0 ? (
         <View style={styles.empty}>
@@ -196,6 +229,14 @@ export default function InspoScreen() {
         />
       )}
 
+      {/* Shop & Dupe Finder Modal */}
+      <ShopSimilarModal
+        visible={!!dupeItem}
+        onClose={() => setDupeItem(null)}
+        itemName={dupeItem?.name ?? ''}
+        category={dupeItem?.category}
+        color={dupeItem?.color}
+      />
     </View>
   )
 }

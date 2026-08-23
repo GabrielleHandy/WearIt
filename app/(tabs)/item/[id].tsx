@@ -12,6 +12,7 @@ import { type Theme, Spacing, Radius, Typography, Shadow } from '@/constants/the
 import { useTheme } from '@/contexts/ThemeContext'
 import { useImagePicker } from '@/hooks/useImagePicker'
 import * as FileSystem from 'expo-file-system'
+import { ShopSimilarModal } from '@/components/ShopSimilarModal'
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 const PHOTO_HEIGHT = Math.round(SCREEN_HEIGHT * 0.60)
@@ -87,6 +88,7 @@ export default function ItemDetail() {
   // Everywhere this item appears — tagged photo looks + saved styled outfits
   const [taggedLooks, setTaggedLooks] = useState<OutfitPhoto[]>([])
   const [styledOutfits, setStyledOutfits] = useState<SavedOutfit[]>([])
+  const [showShopModal, setShowShopModal] = useState(false)
 
   useFocusEffect(
     useCallback(() => {
@@ -339,6 +341,12 @@ export default function ItemDetail() {
             onPress={handleAddToOutfit}
             theme={theme}
           />
+          <ActionBtn
+            icon="cart-outline"
+            label="Shop Dupes"
+            onPress={() => setShowShopModal(true)}
+            theme={theme}
+          />
           {originalPhotoUri && (
             <ActionBtn
               icon="crop-outline"
@@ -355,6 +363,15 @@ export default function ItemDetail() {
             theme={theme}
           />
         </View>
+
+        {/* Shop Similar / Dupe Modal */}
+        <ShopSimilarModal
+          visible={showShopModal}
+          onClose={() => setShowShopModal(false)}
+          itemName={selectedName}
+          category={selectedCategory}
+          color={selectedColor}
+        />
 
         {/* ── Where this item appears ─────────────────────── */}
         {(taggedLooks.length > 0 || styledOutfits.length > 0) && <View style={styles.divider} />}
