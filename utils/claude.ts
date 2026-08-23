@@ -278,7 +278,7 @@ INSPECTION RULES:
 - "category": Must be one of: Tops, Bottoms, Shoes, Dresses, Outerwear, Accessories, Other.
 - "color": Primary color name (e.g. "White", "Navy", "Charcoal", "Burgundy", "Beige", "Olive", "Black", "Tan").
 - "tags": 3 to 5 lowercase style/season/utility tags (e.g. ["casual", "linen", "breathable", "summer", "work"]).
-- "crop": Tight normalized bounding box (0.0–1.0 fractions of width/height) around ONLY the clothing item. Exclude body parts, background clutter, and empty margins. Add 3-5% margin around garment edges.
+- "crop": Normalized bounding box (0.0–1.0 fractions) framing the ENTIRE clothing item. Include all collar tips, sleeve cuffs, and bottom hemlines with generous 6-8% breathing room on all sides so edges are never sliced off.
 - If multiple garments or a person appears, identify and crop the single primary central clothing item.`,
             },
           ],
@@ -299,10 +299,10 @@ INSPECTION RULES:
       typeof parsed.crop.bottom === 'number' &&
       typeof parsed.crop.right === 'number'
         ? {
-            top:    Math.max(0, parsed.crop.top - 0.03),
-            left:   Math.max(0, parsed.crop.left - 0.03),
-            bottom: Math.min(1, parsed.crop.bottom + 0.03),
-            right:  Math.min(1, parsed.crop.right + 0.03),
+            top:    Math.max(0, parsed.crop.top - 0.08),
+            left:   Math.max(0, parsed.crop.left - 0.08),
+            bottom: Math.min(1, parsed.crop.bottom + 0.08),
+            right:  Math.min(1, parsed.crop.right + 0.08),
           }
         : undefined
 

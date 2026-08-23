@@ -339,10 +339,10 @@ export default function ItemDetail() {
             onPress={handleAddToOutfit}
             theme={theme}
           />
-{originalPhotoUri && editMode && (
+          {originalPhotoUri && (
             <ActionBtn
               icon="crop-outline"
-              label="Revert Crop"
+              label="Full Photo"
               onPress={handleRevertCrop}
               theme={theme}
             />
