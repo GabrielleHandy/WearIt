@@ -250,18 +250,3 @@ export async function loadAIEnabled(): Promise<boolean> {
 export async function saveAIEnabled(enabled: boolean): Promise<void> {
   await AsyncStorage.setItem(AI_ENABLED_KEY, JSON.stringify(enabled))
 }
-
-export async function seedStarterWardrobe(): Promise<ClothingItem[]> {
-  const { STARTER_WARDROBE } = await import('@/constants/starterWardrobe')
-  const existing = await loadWardrobe()
-  if (existing.length > 0) return existing
-
-  const starterItems: ClothingItem[] = STARTER_WARDROBE.map(item => ({
-    ...item,
-    id: Crypto.randomUUID(),
-    addedAt: new Date().toISOString(),
-  }))
-
-  await saveWardrobe(starterItems)
-  return starterItems
-}
