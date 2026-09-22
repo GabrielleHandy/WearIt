@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Dimensions, Image, ActivityIndicator, Linking,
+  Dimensions, Image, ActivityIndicator, Linking, Platform,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useFocusEffect } from 'expo-router'
@@ -166,6 +166,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets()
 
   const [weather, setWeather] = useState('')
+  const [weatherStatus, setWeatherStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading')
   const [city, setCity] = useState('')
   const [outfits, setOutfits] = useState<SavedOutfit[]>([])
   const [wardrobe, setWardrobe] = useState<ClothingItem[]>([])
@@ -176,17 +177,21 @@ export default function HomeScreen() {
   useEffect(() => {
     ;(async () => {
       try {
+        if (Platform.OS === 'web') { setWeatherStatus('unavailable'); return }
         const { status } = await Location.requestForegroundPermissionsAsync()
-        if (status !== 'granted') return
+        if (status !== 'granted') { setWeatherStatus('unavailable'); return }
         const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low })
         const [place] = await Location.reverseGeocodeAsync(loc.coords)
         const c = place.city || place.subregion || place.region || ''
         if (c) {
           setCity(c)
           const w = await getWeather(c)
-          if (w) setWeather(w)
+          if (w) { setWeather(w); setWeatherStatus('ready'); return }
         }
-      } catch {}
+        setWeatherStatus('unavailable')
+      } catch {
+        setWeatherStatus('unavailable')
+      }
     })()
   }, [])
 
@@ -243,7 +248,9 @@ export default function HomeScreen() {
             {weatherTemp ? (
               <Text style={styles.weatherTemp}>{weatherTemp}</Text>
             ) : (
-              <Text style={styles.weatherDescText}>Getting weather...</Text>
+              <Text style={styles.weatherDescText}>
+                {weatherStatus === 'loading' ? 'Getting weather...' : 'Weather unavailable'}
+              </Text>
             )}
             {(weatherDesc || city) ? (
               <Text style={styles.weatherDescText} numberOfLines={1}>
@@ -385,20 +392,18 @@ export default function HomeScreen() {
       )}
 
       {/* ── Style Feed ───────────────────────────────────────── */}
-      <View style={[styles.sectionRow, { marginTop: Spacing.xl }]}>
-        <Text style={styles.sectionLabel}>Style Feed</Text>
-      </View>
+      {(feedLoading || feed.length > 0) && (
+        <View style={[styles.sectionRow, { marginTop: Spacing.xl }]}>
+          <Text style={styles.sectionLabel}>Style Feed</Text>
+        </View>
+      )}
 
       {feedLoading ? (
         <ActivityIndicator
           color={theme.accent}
           style={{ marginVertical: Spacing.xl }}
         />
-      ) : feed.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyBody}>Trend articles couldn't load. Check your connection.</Text>
-        </View>
-      ) : (
+      ) : feed.length === 0 ? null : (
         <View style={styles.feedList}>
           {feed.map((item, i) => (
             <TouchableOpacity
@@ -437,7 +442,7 @@ export default function HomeScreen() {
 
 const makeStyles = (theme: Theme) => StyleSheet.create({
   screen:  { flex: 1, backgroundColor: theme.background },
-  content: { paddingBottom: Spacing.xxl },
+  content: { paddingBottom: 72 },
 
   // Header
   header: {

@@ -205,7 +205,7 @@ const makeStyles = (theme: Theme) => StyleSheet.create({
   scroll: {
     paddingTop: Spacing.base,
     paddingHorizontal: Spacing.screen,
-    paddingBottom: 60,
+    paddingBottom: 132,
     alignItems: 'center',
   },
   photoWrap: {

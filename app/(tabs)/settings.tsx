@@ -532,7 +532,7 @@ const makeStyles = (theme: Theme, topInset: number) => StyleSheet.create({
   content: {
     padding: Spacing.screen,
     paddingTop: topInset + 8,
-    paddingBottom: Spacing['12'],
+    paddingBottom: 72,
   },
   heading: {
     fontFamily: 'CormorantGaramond_600SemiBold',

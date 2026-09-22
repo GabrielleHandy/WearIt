@@ -129,6 +129,7 @@ export const Shadow = {
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 3,
+    boxShadow: '0px 2px 8px rgba(26, 18, 24, 0.06)',
   },
   lifted: {
     shadowColor: '#1A1218',
@@ -136,6 +137,7 @@ export const Shadow = {
     shadowOpacity: 0.10,
     shadowRadius: 16,
     elevation: 6,
+    boxShadow: '0px 4px 16px rgba(26, 18, 24, 0.10)',
   },
 } as const
 

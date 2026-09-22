@@ -1,9 +1,9 @@
 import { useMemo } from 'react'
-import { TouchableOpacity, StyleSheet, Text, View } from 'react-native'
+import { TouchableOpacity, StyleSheet } from 'react-native'
 import { useRouter, usePathname } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { type Theme, Radius, Shadow, Typography } from '@/constants/theme'
+import { type Theme, Radius } from '@/constants/theme'
 import { useTheme } from '@/contexts/ThemeContext'
 
 export function FloatingHelpButton() {
@@ -29,11 +29,10 @@ export function FloatingHelpButton() {
       onPress={() => router.push('/help')}
       activeOpacity={0.85}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      accessibilityRole="button"
+      accessibilityLabel="Help"
     >
-      <View style={styles.content}>
-        <Ionicons name="sparkles" size={16} color={theme.textOnAccent} />
-        <Text style={styles.label}>Help</Text>
-      </View>
+      <Ionicons name="sparkles" size={20} color={theme.textOnAccent} />
     </TouchableOpacity>
   )
 }
@@ -46,8 +45,8 @@ const makeStyles = (theme: Theme, bottomInset: number) =>
       bottom: Math.max(bottomInset + 64, 76),
       backgroundColor: theme.accent,
       borderRadius: Radius.full,
-      paddingHorizontal: 14,
-      paddingVertical: 9,
+      width: 44,
+      height: 44,
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 9999,
@@ -58,17 +57,5 @@ const makeStyles = (theme: Theme, bottomInset: number) =>
       shadowRadius: 6,
       borderWidth: 1,
       borderColor: 'rgba(255, 255, 255, 0.18)',
-    },
-    content: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    label: {
-      ...Typography.styles.caption,
-      color: theme.textOnAccent,
-      fontFamily: Typography.bodyMedium,
-      fontSize: 12,
-      letterSpacing: 0.3,
     },
   })

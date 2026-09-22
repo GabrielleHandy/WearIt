@@ -204,15 +204,13 @@ export default function ItemDetail() {
 
   return (
     <View style={[styles.screen, { paddingBottom: insets.bottom }]}>
-
-      {/* ── Full-bleed photo ──────────────────────────────── */}
       <View style={styles.photoContainer}>
         {activePhotoUri ? (
           <Image source={{ uri: activePhotoUri }} style={styles.photo} resizeMode="contain" />
         ) : (
           <View style={styles.photoPlaceholder}>
-            <Text style={styles.placeholderEmoji}>{showBack ? '🔄' : emoji}</Text>
-            {editMode && (
+            <Text style={styles.placeholderEmoji}>{showBack ? '🔄' : (emoji || '👗')}</Text>
+            {editMode ? (
               <TouchableOpacity
                 style={styles.addPhotoBtn}
                 onPress={() => handleChangePhoto(showBack)}
@@ -222,7 +220,7 @@ export default function ItemDetail() {
                   {showBack ? 'Add Back Photo' : 'Add Photo'}
                 </Text>
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
         )}
 
@@ -233,15 +231,15 @@ export default function ItemDetail() {
           <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
         </TouchableOpacity>
 
-        {/* Change photo button (edit mode only) */}
-        {editMode && activePhotoUri && (
+        {/* Change photo button */}
+        {Boolean(editMode && activePhotoUri) ? (
           <TouchableOpacity style={[styles.bgRemoveBtn, { top: insets.top + 8 }]} onPress={() => handleChangePhoto(showBack)} activeOpacity={0.8}>
             <Ionicons name="camera-outline" size={16} color="#FFFFFF" />
           </TouchableOpacity>
-        )}
+        ) : null}
 
-        {/* Front / Back toggle — shown when back photo exists, or in edit mode */}
-        {(hasBackPhoto || editMode) && (
+        {/* Front / Back toggle */}
+        {Boolean(hasBackPhoto || editMode) ? (
           <View style={[styles.photoTabs, { bottom: Spacing.md }]}>
             <TouchableOpacity
               style={[styles.photoTab, !showBack && styles.photoTabActive, { backgroundColor: !showBack ? theme.accent : 'rgba(0,0,0,0.4)' }]}
@@ -264,10 +262,9 @@ export default function ItemDetail() {
               </Text>
             </TouchableOpacity>
           </View>
-        )}
+        ) : null}
       </View>
 
-      {/* ── Info panel ───────────────────────────────────── */}
       <ScrollView
         style={styles.panel}
         contentContainerStyle={styles.panelContent}
@@ -318,12 +315,12 @@ export default function ItemDetail() {
         )}
 
         {/* Save button */}
-        {editMode && changesMade && (
+        {Boolean(editMode && changesMade) ? (
           <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
             <Ionicons name="checkmark" size={16} color={theme.textOnAccent} />
             <Text style={styles.saveBtnText}>Save Changes</Text>
           </TouchableOpacity>
-        )}
+        ) : null}
 
         <View style={styles.divider} />
 
@@ -347,14 +344,14 @@ export default function ItemDetail() {
             onPress={() => setShowShopModal(true)}
             theme={theme}
           />
-          {originalPhotoUri && (
+          {Boolean(originalPhotoUri) ? (
             <ActionBtn
               icon="crop-outline"
               label="Full Photo"
               onPress={handleRevertCrop}
               theme={theme}
             />
-          )}
+          ) : null}
           <ActionBtn
             icon="trash-outline"
             label="Delete"
@@ -373,10 +370,10 @@ export default function ItemDetail() {
           color={selectedColor}
         />
 
-        {/* ── Where this item appears ─────────────────────── */}
-        {(taggedLooks.length > 0 || styledOutfits.length > 0) && <View style={styles.divider} />}
+        {/* Where this item appears */}
+        {Boolean(taggedLooks.length > 0 || styledOutfits.length > 0) ? <View style={styles.divider} /> : null}
 
-        {taggedLooks.length > 0 && (
+        {taggedLooks.length > 0 ? (
           <View style={styles.linkSection}>
             <Text style={styles.linkLabel}>IN TAGGED LOOKS</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.linkRow}>
@@ -391,9 +388,9 @@ export default function ItemDetail() {
               ))}
             </ScrollView>
           </View>
-        )}
+        ) : null}
 
-        {styledOutfits.length > 0 && (
+        {styledOutfits.length > 0 ? (
           <View style={styles.linkSection}>
             <Text style={styles.linkLabel}>IN STYLED OUTFITS</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.linkRow}>
@@ -412,7 +409,7 @@ export default function ItemDetail() {
               ))}
             </ScrollView>
           </View>
-        )}
+        ) : null}
       </ScrollView>
     </View>
   )
