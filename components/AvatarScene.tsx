@@ -214,7 +214,18 @@ export default function AvatarScene({ outfit, rotationRef }: {
       getContext: () => gl,
     } as unknown as HTMLCanvasElement
 
-    const renderer = new THREE.WebGLRenderer({ canvas, context: gl as unknown as WebGLRenderingContext, antialias: true })
+    // expo-gl's context is WebGL 2, but it inherits from WebGLRenderingContext,
+    // which trips three's "WebGL 1 is not supported" instanceof check. Hide the
+    // global just while the renderer is constructed (that check is the only use).
+    const g = globalThis as { WebGLRenderingContext?: unknown }
+    const webgl1 = g.WebGLRenderingContext
+    g.WebGLRenderingContext = undefined
+    let renderer: THREE.WebGLRenderer
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, context: gl as unknown as WebGL2RenderingContext, antialias: true })
+    } finally {
+      g.WebGLRenderingContext = webgl1
+    }
     renderer.setPixelRatio(1)
     renderer.setSize(width, height, false)
     renderer.setClearColor(0x000000, 0)
