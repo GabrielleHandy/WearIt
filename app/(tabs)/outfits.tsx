@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView, Platform, Image,
 } from 'react-native'
 import OutfitCanvas from '@/components/OutfitCanvas'
+import AvatarDressUp from '@/components/AvatarDressUp'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect, router, useLocalSearchParams } from 'expo-router'
 import * as Location from 'expo-location'
@@ -286,6 +287,7 @@ export default function OutfitsScreen() {
 
   // Canvas builder
   const [showCanvas, setShowCanvas] = useState(false)
+  const [showAvatar, setShowAvatar] = useState(false)
   const [canvasInitialIds, setCanvasInitialIds] = useState<string[]>([])
   const [canvasInitialName, setCanvasInitialName] = useState('')
   const [canvasOutfitId, setCanvasOutfitId] = useState<string | undefined>(undefined)
@@ -399,6 +401,20 @@ export default function OutfitsScreen() {
     setCanvasInitialLayout(undefined)
   }
 
+  const handleSaveAvatarOutfit = async (itemIds: string[], outfitName: string) => {
+    const nameList = wardrobe.filter(i => itemIds.includes(i.id)).map(i => i.name).join(', ')
+    const saved = await saveOutfit({
+      suggestion: `${outfitName}: ${nameList}.`,
+      reason: 'Styled on the avatar.',
+      occasion: outfitName,
+      weather,
+      savedAt: new Date().toISOString(),
+      itemIds,
+    })
+    setSavedLooks(prev => [saved, ...prev])
+    setShowAvatar(false)
+  }
+
   const handleDeleteFromCanvas = async (id: string) => {
     await deleteSavedOutfit(id)
     setSavedLooks(prev => prev.filter(o => o.id !== id))
@@ -479,6 +495,14 @@ const rows = savedLooks.reduce<SavedOutfit[][]>((acc, item, i) => {
         initialLayout={canvasInitialLayout}
       />
 
+      <AvatarDressUp
+        visible={showAvatar}
+        wardrobe={wardrobe}
+        theme={theme}
+        onClose={() => setShowAvatar(false)}
+        onSave={handleSaveAvatarOutfit}
+      />
+
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
 
         {/* ── Header ─────────────────────────────────────── */}
@@ -525,6 +549,14 @@ const rows = savedLooks.reduce<SavedOutfit[][]>((acc, item, i) => {
             >
               <Ionicons name="construct-outline" size={15} color={theme.textSecondary} />
               <Text style={[styles.secondaryBtnText, { color: theme.textSecondary }]}>Build</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.secondaryBtn, { borderColor: theme.border }]}
+              onPress={() => setShowAvatar(true)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="body-outline" size={15} color={theme.textSecondary} />
+              <Text style={[styles.secondaryBtnText, { color: theme.textSecondary }]}>Dress</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.secondaryBtn, { borderColor: theme.border }]}
