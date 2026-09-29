@@ -8,7 +8,27 @@ import { Ionicons } from '@expo/vector-icons'
 import { ClothingItem } from '@/constants/types'
 import { type Theme, Spacing, Radius } from '@/constants/theme'
 import { Outfit, slotForCategory, toggleWorn, wornItems } from '@/utils/avatarSlots'
-import AvatarScene from '@/components/AvatarScene'
+
+// The 3D scene pulls in native GL modules. Load it only when the avatar opens,
+// so a problem there can never take down the Outfits tab (or the whole app).
+function LazyScene({ outfit, rotationRef, theme }: {
+  outfit: Outfit; rotationRef: { current: number }; theme: Theme
+}) {
+  let Scene: typeof import('@/components/AvatarScene').default
+  try {
+    Scene = require('@/components/AvatarScene').default
+  } catch (e) {
+    console.warn('Avatar 3D scene failed to load', e)
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.base }}>
+        <Text style={{ color: theme.textSecondary, textAlign: 'center', fontFamily: 'JosefinSans_400Regular' }}>
+          The 3D avatar couldn't start on this build. Try rebuilding the app.
+        </Text>
+      </View>
+    )
+  }
+  return <Scene outfit={outfit} rotationRef={rotationRef} />
+}
 
 const CATEGORY_EMOJI: Record<string, string> = {
   Tops: '👕', Bottoms: '👖', Shoes: '👟',
@@ -97,7 +117,7 @@ export default function AvatarDressUp({
 
           <GestureDetector gesture={spin}>
             <View style={s.stage}>
-              {visible && <AvatarScene outfit={outfit} rotationRef={rotationRef} />}
+              {visible && <LazyScene outfit={outfit} rotationRef={rotationRef} theme={theme} />}
               <Text style={s.hint} pointerEvents="none">Drag to rotate</Text>
             </View>
           </GestureDetector>
